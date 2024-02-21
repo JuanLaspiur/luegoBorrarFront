@@ -1,4 +1,4 @@
-import { useState, useContext } from 'react';
+import { useState, useContext, useEffect } from 'react';
 import {
   CardContent,
   Button,
@@ -8,9 +8,9 @@ import {
   Box,
   CircularProgress,
 } from '@mui/material';
-import { postEvent, createInvitationByExcel } from '../../api/axios';
+import { postEvent, createInvitationByExcel, sendInvitation } from '../../api/axios';
 import { SessionContext } from '../../App';
-import { useNavigate } from 'react-router-dom';
+import { Await, useNavigate } from 'react-router-dom';
 
 const NewEvent = () => {
   const { loading, setLoading } = useContext(SessionContext);
@@ -20,36 +20,52 @@ const NewEvent = () => {
   const [date, setDate] = useState('');
   const [max, setParticipantes] = useState('');
   const [files, setFiles] = useState([]);
+//constantes de Juancito
+const [isChecked, setIsChecked] = useState(false);
+const [nombreDOM, setNombreDOM ] = useState("") 
+const [apellidoDOM, setApellidoDOM] = useState("");
+const [emailDOM, setEmailDOM] = useState("");
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (name === '' || description === '' || date === '' || max === '') {
+
+  const handleSubmit = async (e) => {       
+    
+     e.preventDefault(); 
+     
+      if (name === '' || description === '' || date === '' || max === '') {
+          alert('Todos los campos son obligatorios'); // Muestra una alerta si algún campo está vacío
+          return; 
+      }  
+      setLoading(true); // Establece el estado de 'loading' como verdadero
+  
+      let  newEevent = await eventCreateReact();
+      console.log("newEevent.event._id ::" +newEevent.event._id);
+      
+      if (!isChecked) { // Verifica si isChecked es falso
+  
+      // Verifica si hay archivos seleccionados
+        if (files.length != 0) {
+          // Obtiene el primer archivo de la lista de archivos
+          const file = files[0];
+          const formData = new FormData(); // Crea un nuevo objeto FormData
+          formData.append('file', file); // Agrega el archivo al objeto FormData
+  
+          // Realiza una solicitud para crear invitaciones basadas en el archivo Excel
+          await createInvitationByExcel(newEevent.event._id, formData);
+        }
+        clearAndNavigate();
+      
+      }else{
+     /* if (name === '' || description === '' || date === '' || nombreDOM === '' || apellidoDOM === '' || emailDOM === '') {
       alert('Todos los campos son obligatorios');
-      return;
-    }
-    setLoading(true);
-    const form = {
-      name,
-      description,
-      date,
-      max,
-    };
-    const newEevent = await postEvent(form);
+      return;   
+      } */
+  
+     await sendInvitation(newEevent.event._id, nombreDOM, apellidoDOM, emailDOM);
+   
+    clearAndNavigate();
+  }
 
-    if (files.length != 0) {
-      const file = files[0];
-      const formData = new FormData();
-      formData.append('file', file);
-      await createInvitationByExcel(newEevent.event._id, formData);
-    }
-
-    setName('');
-    setDescription('');
-    setDate('');
-    setParticipantes('');
-    setFiles([]);
-    setLoading(false);
-    navigate('/events');
+ 
   };
   const handleFileChange = (e) => {
     e.preventDefault();
@@ -61,6 +77,47 @@ const NewEvent = () => {
     setFiles([...files, ...uniqueFiles]);
   };
 
+
+  /* Funcion juancito */
+  const handleCheckboxChange=(e)=>{
+    setParticipantes('1');
+    setIsChecked(e.target.checked);
+  }
+
+
+
+  const clearAndNavigate=()=>{
+    setName('');
+    setDescription('');
+    setDate('');
+    setParticipantes('');
+    setEmailDOM('');
+    setApellidoDOM('')
+    setNombreDOM('')
+    setFiles([]);
+    setLoading(false);
+    navigate('/events');
+  }
+
+  const eventCreateReact=async()=>{
+       // Crea un objeto 'form' con los datos del evento
+     if(max === 0 || !max){
+       setParticipantes('1');
+      }
+
+       const form = {
+        name,
+        description,
+        date,
+        max,
+    };
+    console.log(form);
+
+    // Realiza una solicitud POST para crear un nuevo evento en el servidor
+    return await postEvent(form);
+  }
+  
+  useEffect(()=>{},[max]);
   return (
     <div>
       {loading ? (
@@ -108,7 +165,7 @@ const NewEvent = () => {
             >
               Datos generales
             </Typography>
-            <CardContent>
+            <CardContent> 
               <Grid
                 container
                 rowSpacing={1}
@@ -126,7 +183,7 @@ const NewEvent = () => {
                     width: '100vw',
                   }}
                 >
-                  <Typography component="div" variant="h5">
+                  <Typography component="div" variant="h5"> 
                     <Box
                       sx={{
                         display: 'flex',
@@ -177,115 +234,176 @@ const NewEvent = () => {
                       />
                     </Box>
                   </Typography>
-                  <Typography component="div" variant="h5">
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        marginBottom: 2,
-                        width: '35vw',
-                        height: '73px',
-                      }}
-                    >
-                      <input
-                        type="number"
-                        min={0}
-                        placeholder="Participantes Maximos"
-                        style={{
-                          padding: '10px 10px 10px 20px',
-                          borderRadius: '10px',
-                          border: '1px solid',
-                        }}
-                        onChange={(e) => setParticipantes(e.target.value)}
-                      />
-                    </Box>
-                  </Typography>
-                  <Typography component="div" variant="h5">
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        marginBottom: 2,
-                        width: '32.35vw',
-                        height: '3.94vh',
-                        color: '#B12687',
-                        fontSize: {
-                          xs: '1.5vh',
-                          md: '3.22vh',
-                        },
-                        fontWeight: '700',
-                        paddingBottom: '20px',
-                      }}
-                    >
-                      Carga de Invitados
-                    </Box>
-                  </Typography>
-                  <Typography component="div" variant="h5">
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        marginBottom: 2,
-                        width: '31.8vw',
-                        height: '6.54vh',
-                        fontSize: {
-                          xs: '1.5vh',
-                          md: '3.22vh',
-                        },
-                      }}
-                    >
-                      Sube documentos Excel de hasta 5 mb
-                    </Box>
-                  </Typography>
+  
+                <Box>
+                  
+                <p style={{fontSize:'15px'}}>Invitación unica</p>
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={handleCheckboxChange}
+                    />
+                </Box>
+      
 
-                  <input
-                    type="file"
-                    style={{
-                      padding: '10px 10px 10px 20px',
-                      borderRadius: '10px',
-                      border: '1px solid',
-                      backgroundcolor: '#B12687',
-                      color: 'white',
-                    }}
-                    onChange={handleFileChange}
-                    multiple
-                  />
-                  <ul>
-                    {files.map((file, index) => (
-                      <li
-                        key={index}
-                        //backgroud pink
-                        style={{
-                          padding: '10px 10px 10px 20px',
-                          borderRadius: '10px',
-                          border: '1px solid',
-                          backgroundColor: '#EFA1D7',
-                          color: 'white',
-                          width: '14vw',
-                        }}
-                      >
-                        {file.name}
-                        <Button
-                          style={{
-                            width: '1vw',
-                            height: '1vh',
-                          }}
-                          onClick={() => {
-                            const updatedFiles = files.filter(
-                              (f, i) => i !== index,
-                            );
-                            setFiles(updatedFiles);
-                          }}
-                        >
-                          x
-                        </Button>
-                      </li>
-                    ))}
-                  </ul>
+                  {!isChecked && (
+  <Typography component="div" variant="h5">
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        marginBottom: 2,
+        width: '35vw',
+        height: '73px',
+      }}
+    >
+      <input
+        type="number"
+        min={0}
+        placeholder="Participantes Maximos"
+        style={{
+          padding: '10px 10px 10px 20px',
+          borderRadius: '10px',
+          border: '1px solid',
+        }}
+        onChange={(e) => setParticipantes(e.target.value)}
+      />
+    </Box>
+
+    <Typography component="div" variant="h5">
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          marginBottom: 2,
+          width: '32.35vw',
+          height: '3.94vh',
+          color: '#B12687',
+          fontSize: {
+            xs: '1.5vh',
+            md: '3.22vh',
+          },
+          fontWeight: '700',
+          paddingBottom: '20px',
+        }}
+      >
+        Carga de Invitados
+      </Box>
+    </Typography>
+
+    <Typography component="div" variant="h5">
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          marginBottom: 2,
+          width: '31.8vw',
+          height: '6.54vh',
+          fontSize: {
+            xs: '1.5vh',
+            md: '3.22vh',
+          },
+        }}
+      >
+        Sube documentos Excel de hasta 5 mb
+      </Box>
+    </Typography>
+
+    <input
+      type="file"
+      style={{
+        padding: '10px 10px 10px 20px',
+        borderRadius: '10px',
+        border: '1px solid',
+        backgroundcolor: '#B12687',
+        color: 'white',
+      }}
+      onChange={handleFileChange}
+      multiple
+    />
+
+    <ul>
+      {files.map((file, index) => (
+        <li
+          key={index}
+          //backgroud pink
+          style={{
+            padding: '10px 10px 10px 20px',
+            borderRadius: '10px',
+            border: '1px solid',
+            backgroundColor: '#EFA1D7',
+            color: 'white',
+            width: '14vw',
+          }}
+        >
+          {file.name} 
+          <Button
+            style={{
+              width: '1vw',
+              height: '1vh',
+            }}
+            onClick={() => {
+              const updatedFiles = files.filter(
+                (f, i) => i !== index,
+              );
+              setFiles(updatedFiles);
+            }}
+          >
+            x
+          </Button>
+        </li>
+      ))}
+    </ul>
+  </Typography>
+                  )}
+
+                  {isChecked &&(  <>
+    <input
+      type="text"
+      placeholder="Nombre"
+      style={{
+        padding: '10px',
+        borderRadius: '10px',
+        border: '1px solid',
+        marginBottom: '10px',  
+        marginTop: '10px',           
+      }}
+      className='nombreInput'
+      onChange={(e) => setNombreDOM(e.target.value)}
+    />
+       <input
+      type="text"
+      placeholder="Apellido"
+      style={{
+        padding: '10px',
+        borderRadius: '10px',
+        border: '1px solid', 
+        marginRight: '150px',
+        marginTop: '10px',       
+
+      }}
+      className='apellidoInput'
+      onChange={(e) => setApellidoDOM(e.target.value)}
+    /> 
+    <input
+      type="text"
+      placeholder="Email"
+      style={{
+        padding: '10px',
+        borderRadius: '10px',
+        border: '1px solid',
+        marginTop: '10px',  
+        width:'450px'     
+      }}
+      className='emailInput'
+      onChange={(e) => setEmailDOM(e.target.value)}
+    />
+  </>
+)}
                 </Grid>
 
                 <Grid item xs={6}>
-                  <Typography component="div" variant="h5">
+                  <Typography component="div" variant="h5"> 
                     <Box
                       sx={{
                         display: 'flex',

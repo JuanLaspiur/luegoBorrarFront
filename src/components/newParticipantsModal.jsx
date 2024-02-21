@@ -2,7 +2,7 @@
 // eslint-disable-next-line no-unused-vars
 import React, { useState } from 'react';
 import { Grid, Typography, Box, Button, Modal } from '@mui/material';
-import InvitacionUnicaModal from './invitacionUnicaModal';
+import InvitacionUnicaModal from './InvitacionUnicaModal';
 import InvitacionMasivaModal from './invitacionMasivaModal';
 
 const newParticipantsModal = ({ open, setOpen, id, loading, setLoading }) => {

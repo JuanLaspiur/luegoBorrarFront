@@ -11,13 +11,13 @@ import {
 } from '@mui/material';
 import { createInvitation } from '../api/axios';
 
-const invitacionUnicaModal = ({ open, setOpen, id, loading, setLoading }) => {
+const InvitacionUnicaModal = ({ open, setOpen, id, loading, setLoading, onClose }) => {
   const [name, setName] = useState('');
   const [lastname, setLastname] = useState('');
   const [email, setEmail] = useState('');
   const handleClose = () => {
-    setOpen(false);
-  };
+    window.location.reload();
+    };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -43,9 +43,10 @@ const invitacionUnicaModal = ({ open, setOpen, id, loading, setLoading }) => {
     await createInvitation(form);
     setLoading(false);
     setOpen(false);
+    
     return;
   };
-
+ 
   return (
     <Modal
       open={open}
@@ -220,13 +221,14 @@ const invitacionUnicaModal = ({ open, setOpen, id, loading, setLoading }) => {
               </Button>
             </Grid>
           </form>
-          <Button onClick={handleClose} sx={{ mt: 2 }}>
-            Close
-          </Button>
+          <Button className="closeButton" onClick={handleClose}>
+  Close
+</Button>
+
         </Box>
       )}
     </Modal>
   );
 };
 
-export default invitacionUnicaModal;
+export default InvitacionUnicaModal;

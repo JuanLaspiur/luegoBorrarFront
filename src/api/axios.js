@@ -85,19 +85,42 @@ async function deleteEvent(id) {
   }
 }
 
-async function createInvitation(form) {
+
+
+async function createInvitation(participante) {
   try {
-    const { data } = await backendApi.post('invitation', form);
-    return data;
+      await backendApi.post('invitation', participante);
   } catch (error) {
-    console.log(error);
-    return {};
+      console.error('Error al enviar la solicitud de invitación:', error);
+      throw error; 
+  }
+}
+
+async function sendInvitation(eventId, name, lastname, email) {
+  try {
+    // Construir el objeto de datos a enviar en el cuerpo de la solicitud
+    const data = {
+      event: eventId,
+      name: name,
+      lastname: lastname,
+      email: email
+    };
+
+    // Realizar la solicitud PUT al servidor
+    const response = await backendApi.post(`invitation`,data);
+    console.log(response);
+    return response.data; // Devolver los datos recibidos del servidor
+  } catch (error) {
+    // Manejar errores de solicitud
+    console.error('Error al enviar la invitación:', error);
+    throw new Error('Error al enviar la invitación.');
   }
 }
 
 async function createInvitationByExcel(id, form) {
   try {
     const { data } = await backendApi.post(`invitation/excel/${id}`, form);
+    
     return data;
   } catch (error) {
     console.log(error);
@@ -245,4 +268,5 @@ export {
   getEvstablishments,
   editEstablishment,
   deleteEstablishment,
+  sendInvitation
 };
